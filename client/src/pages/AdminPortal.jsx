@@ -1,24 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import {
-  Loader2,
-  RefreshCw,
-  ShieldCheck,
-  UserPlus,
-  ShieldOff,
-  Trash2,
-  KeyRound,
-  Radio,
-  Users as UsersIcon,
+    KeyRound,
+    Loader2,
+    Radio,
+    RefreshCw,
+    ShieldCheck,
+    ShieldOff,
+    Trash2,
+    UserPlus,
+    Users as UsersIcon,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  fetchSystemState,
-  adminSetSystem,
-  adminFetchUsers,
-  adminCreateUser,
-  adminDeleteUser,
-  adminResetPassword,
+    adminCreateUser,
+    adminDeleteUser,
+    adminFetchUsers,
+    adminResetPassword,
+    adminSetSystem,
+    fetchSystemState,
 } from "../api/admin";
+import http from "../api/http";
 
 // Cloudinary constants removed
 
@@ -103,12 +103,8 @@ export default function AdminPortal() {
     const formData = new FormData();
     formData.append("file", createImageFile);
 
-    // We need to use the axios instance from api/http or build full url
-    // Let's assume we can just use the relative path if proxy is set or standard axios behavior
-    // But AdminPortal imports `axios` directly. Let's rely on that if we know base URL
-    // Actually, safer to import http from ../api/http
     try {
-      const res = await axios.post("http://localhost:5000/api/upload", formData);
+      const res = await http.post("/upload", formData);
       return res.data.url;
     } catch (e) {
       console.error("Upload failed", e);

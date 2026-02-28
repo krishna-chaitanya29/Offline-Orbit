@@ -1,5 +1,5 @@
 // src/context/CallContext.jsx
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { connectSocket, getSocket } from "../lib/socket";
 
 const CallContext = createContext(null);
@@ -20,9 +20,15 @@ export function CallProvider({ children }) {
   const pcRef = useRef(null);
   const cleaningRef = useRef(false); // re-entrancy guard for cleanup
 
+  // ★ Ref that always holds the current remote user so ICE handlers can read it
+  const remoteUserRef = useRef(null);
+
   // ICE ordering safety
   const pendingRemoteCandidatesRef = useRef([]);
   const remoteDescSetRef = useRef(false);
+
+  // Keep remoteUserRef in sync with state
+  useEffect(() => { remoteUserRef.current = remoteUser; }, [remoteUser]);
 
   const ensureSocket = () => getSocket() || connectSocket();
   const sdpHasVideo = (desc) => typeof desc?.sdp === "string" && /m=video/.test(desc.sdp);
@@ -55,8 +61,12 @@ export function CallProvider({ children }) {
       }
 
       console.log("[ice] local candidate (v4):", e.candidate.type, e.candidate.address);
-      const to = remoteUser?.userId || remoteUser;
-      if (!to) return;
+      // ★ Read from ref, NOT from stale closure state
+      const to = remoteUserRef.current?.userId;
+      if (!to) {
+        console.warn("[ice] no remoteUser yet, dropping candidate");
+        return;
+      }
       ensureSocket().emit("call:ice", { to, candidate: e.candidate });
     };
 
@@ -157,6 +167,7 @@ export function CallProvider({ children }) {
     remoteDescSetRef.current = false;
     pendingRemoteCandidatesRef.current = [];
 
+    remoteUserRef.current = null;
     setRemoteUser(null);
     setIncomingOffer(null);
     setIncomingHasVideo(false);
@@ -165,13 +176,16 @@ export function CallProvider({ children }) {
     cleaningRef.current = false;
   };
 
-  // --- Signaling listeners (once) ---
+  // --- Signaling listeners ---
   useEffect(() => {
     const s = ensureSocket();
+    if (!s) return; // no token yet → nothing to attach
 
     const onRing = ({ from, offer, fromName }) => {
       console.log("[sig] incoming offer from", from);
-      setRemoteUser({ userId: from, name: fromName || undefined });
+      const user = { userId: from, name: fromName || undefined };
+      remoteUserRef.current = user; // update ref immediately
+      setRemoteUser(user);
       setIncomingOffer(offer);
       setIncomingHasVideo(sdpHasVideo(offer));
       setState("incoming");
@@ -216,8 +230,10 @@ export function CallProvider({ children }) {
     const to = toUser?.userId || toUser;
     if (!to) return;
 
-    // Set a friendly name if known
-    setRemoteUser({ userId: to, name: toUser?.name || undefined });
+    // ★ Set ref immediately (before any async work) so ICE handler has it
+    const user = { userId: to, name: toUser?.name || undefined };
+    remoteUserRef.current = user;
+    setRemoteUser(user);
     setState("calling");
 
     try {
@@ -229,7 +245,7 @@ export function CallProvider({ children }) {
         "If you are on a different device on the network, browsers block media on 'http://'.\n" +
         "Solution: Enable 'Insecure origins treated as secure' in chrome://flags for this IP."
       );
-      setState("idle");
+      cleanup();
       return;
     }
     const pc = ensurePc();
@@ -260,7 +276,7 @@ export function CallProvider({ children }) {
   const callVideo = async (toUser) => callUserInternal(toUser, true);
 
   const accept = async () => {
-    if (!incomingOffer || !remoteUser) return;
+    if (!incomingOffer || !remoteUserRef.current) return;
     const needVideo = incomingHasVideo;
 
     await startLocalMedia(needVideo);
@@ -274,21 +290,21 @@ export function CallProvider({ children }) {
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
-    ensureSocket().emit("call:answer", { to: remoteUser.userId, answer });
+    ensureSocket().emit("call:answer", { to: remoteUserRef.current.userId, answer });
     setIncomingOffer(null);
     setState("connecting");
   };
 
   const decline = () => {
-    if (remoteUser) {
-      ensureSocket().emit("call:end", { to: remoteUser.userId, reason: "decline" });
+    if (remoteUserRef.current) {
+      ensureSocket().emit("call:end", { to: remoteUserRef.current.userId, reason: "decline" });
     }
     cleanup();
   };
 
   const hangup = () => {
-    if (remoteUser) {
-      ensureSocket().emit("call:end", { to: remoteUser.userId, reason: "hangup" });
+    if (remoteUserRef.current) {
+      ensureSocket().emit("call:end", { to: remoteUserRef.current.userId, reason: "hangup" });
     }
     cleanup();
   };

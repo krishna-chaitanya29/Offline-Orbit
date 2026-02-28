@@ -1,7 +1,7 @@
 // server/controllers/userController.js
-import User from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import User from '../models/userModel.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
@@ -25,7 +25,7 @@ export const createUser = async (req, res) => {
   try {
     const { image, name, mobile, address, tag, email, password, role } = req.body;
 
-    if (!image || !name || !mobile || !address || !tag || !email || !password) {
+    if (!name || !mobile || !address || !tag || !email || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -35,7 +35,7 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      image,
+      image: image || '',
       name,
       mobile,
       address,

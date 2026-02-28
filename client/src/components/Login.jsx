@@ -1,8 +1,9 @@
 // src/components/Login.jsx
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Radio } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Radio } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import http from "../api/http";
+import { connectSocket, disconnectSocket } from "../lib/socket";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -28,6 +29,11 @@ const Login = () => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
+
+      // Re-create socket with the fresh token
+      disconnectSocket();
+      connectSocket();
+
       setMessage({ text: "Login successful!", type: "success" });
 
       if (role === "admin") navigate("/admin-dashboard");

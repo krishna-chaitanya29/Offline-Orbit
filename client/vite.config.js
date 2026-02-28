@@ -1,5 +1,5 @@
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   // Load environment variables
@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
 
   const proxyTarget =
     (env.VITE_API_URL && env.VITE_API_URL.replace(/\/+$/, '')) ||
-    'https://chat-without-internet.onrender.com';
+    'http://localhost:5000';
 
   return {
     plugins: [react()],
@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
-          secure: true,
+          secure: false,
         },
       },
     },

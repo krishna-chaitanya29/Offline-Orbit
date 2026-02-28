@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   image: {
-    type: String, // Cloudinary image URL
-    required: true,
+    type: String, // Local upload path (e.g. /uploads/image-123.png) or empty for initials
+    default: '',
   },
   name: {
     type: String,

@@ -1,8 +1,8 @@
 // server/middleware/multer.js
 import multer from 'multer';
 // Local Disk Storage for Offline Mode
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 
 // Ensure upload directory exists
 const uploadDir = path.join(process.cwd(), 'public/uploads');
@@ -22,6 +22,9 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
 
 export default upload;

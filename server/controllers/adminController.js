@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
-import { getSystemState, setSystemState } from '../utils/systemState.js';
 import User from '../models/userModel.js';
+import { getSystemState, setSystemState } from '../utils/systemState.js';
 
 const sanitizeUser = (user) => {
   if (!user) return null;
@@ -48,7 +48,8 @@ export async function adminCreateUser(req, res) {
 
     const finalPassword = password || 'orbit123';
     const hashedPassword = await bcrypt.hash(finalPassword, 10);
-    const fallbackImage = image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundType=gradientLinear`;
+    // Offline-safe fallback: no external URL. Store empty string; Avatar component renders initials.
+    const fallbackImage = image || '';
 
     const user = await User.create({
       name,

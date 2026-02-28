@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import useCall from '../hooks/useCall';
+import { useEffect, useRef, useState } from 'react';
+import { useCall } from '../hooks/useCall';
 import useSystemState from '../hooks/useSystemState';
 
 export default function CallPanel({ meId, targetUser }) {
@@ -8,7 +8,7 @@ export default function CallPanel({ meId, targetUser }) {
     incomingOffer, incomingHasVideo,
     callAudio, callVideo, accept, decline, hangup,
     toggleMute, toggleCamera
-  } = useCall(meId);
+  } = useCall();
 
   const localRef = useRef(null);
   const remoteRef = useRef(null);

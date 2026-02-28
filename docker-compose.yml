@@ -1,0 +1,51 @@
+# OfflineOrbit – Docker Compose
+# Usage:
+#   docker compose up --build          (first time / after code changes)
+#   docker compose up                  (subsequent runs)
+#   docker compose down -v             (stop + remove data)
+
+services:
+  # ── MongoDB ──
+  mongo:
+    image: mongo:7
+    container_name: orbit-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # ── Backend (Express + Socket.IO) ──
+  server:
+    build: ./server
+    container_name: orbit-server
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/offline_orbit
+      - JWT_SECRET=offline_orbit_lan_secret_key_2026
+    ports:
+      - "5001:5000"
+    volumes:
+      - uploads_data:/app/public/uploads
+
+  # ── Frontend (React built → nginx) ──
+  client:
+    build:
+      context: ./client
+      args:
+        # At build time the React app bakes this URL in.
+        # Empty string = "same origin" → nginx proxies /api & /socket.io to server.
+        VITE_API_URL: ""
+    container_name: orbit-client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+
+volumes:
+  mongo_data:
+  uploads_data:

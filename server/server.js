@@ -1,27 +1,43 @@
 // server.js (ESM)
+import cors from 'cors';
 import 'dotenv/config'; // Load env vars BEFORE other imports
 import express from 'express';
-// import dotenv from 'dotenv'; // Removed manual config call
-import cors from 'cors';
 import { createServer } from 'http';
+import os from 'os';
 import { Server } from 'socket.io';
 
 import connectDb from './config/db.js';
-import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js'; // ← admin toggle
 import chatRoutes from './routes/chatRoutes.js';
-import systemRoutes from './routes/systemRoutes.js';   // ← public read-only state
-import adminRoutes from './routes/adminRoutes.js';     // ← admin toggle
-import userUpdateRoutes from "./routes/userUpdateRoutes.js";
+import systemRoutes from './routes/systemRoutes.js'; // ← public read-only state
 import uploadRoutes from './routes/uploadRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import userUpdateRoutes from "./routes/userUpdateRoutes.js";
 
-import { initBroadcastThread } from './utils/initBroadcastThread.js';
 import { attachSocketAuth } from './middleware/authSocket.js';
 import { registerSockets } from './sockets/index.js';
-import { loadSystemState, getSystemState } from './utils/systemState.js'; // ← kill switch cache
+import { initBroadcastThread } from './utils/initBroadcastThread.js';
+import { getSystemState, loadSystemState } from './utils/systemState.js'; // ← kill switch cache
 
 // dotenv.config(); // Loaded at top
 
 const app = express();
+
+// ── Detect LAN IPs ──
+function getLanIPs() {
+  const interfaces = os.networkInterfaces();
+  const ips = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip internal (loopback) and non-IPv4
+      if (iface.internal || iface.family !== 'IPv4') continue;
+      // Skip Docker bridge IPs (172.17.x.x - 172.31.x.x)
+      if (/^172\.(1[7-9]|2\d|3[01])\./.test(iface.address)) continue;
+      ips.push(iface.address);
+    }
+  }
+  return ips;
+}
 
 // Middleware
 app.use(express.json());
@@ -81,7 +97,32 @@ async function start() {
     // 7) Start
     const port = process.env.PORT || 5000;
     server.listen(port, '0.0.0.0', () => {
-      console.log(`Server is running at http://localhost:${port}`);
+      // Detect LAN IPs for easy sharing
+      const lanIPs = getLanIPs();
+
+      console.log('\n');
+      console.log('╔══════════════════════════════════════════════════════╗');
+      console.log('║           🚀 OfflineOrbit Server Running            ║');
+      console.log('╠══════════════════════════════════════════════════════╣');
+      console.log(`║  Local:    http://localhost:${port}                   ║`);
+      if (lanIPs.length > 0) {
+        lanIPs.forEach((ip) => {
+          const url = `http://${ip}:${port}`;
+          const pad = ' '.repeat(Math.max(0, 37 - url.length));
+          console.log(`║  Network:  ${url}${pad}║`);
+        });
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║  📱 Share this URL with others on the same WiFi:    ║');
+        const shareUrl = `http://${lanIPs[0]}`;
+        const sharePad = ' '.repeat(Math.max(0, 39 - shareUrl.length));
+        console.log(`║     👉 ${shareUrl}${sharePad}║`);
+      } else {
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║  ⚠️  No LAN IP detected (Docker bridge mode?)       ║');
+        console.log('║  Run: ipconfig / ifconfig on host to find your IP   ║');
+      }
+      console.log('╚══════════════════════════════════════════════════════╝');
+      console.log('\n');
     });
   } catch (err) {
     console.error('Fatal startup error:', err);

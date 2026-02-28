@@ -1,20 +1,19 @@
 // src/pages/Register.jsx
-import React, { useState } from "react";
-import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
 import {
-  Mail,
-  Lock,
-  User,
-  Phone,
-  Home,
-  ImagePlus,
-  Eye,
-  EyeOff,
-  Radio,
-  Loader2,
-  Tag,
+    Eye,
+    EyeOff,
+    Home,
+    ImagePlus,
+    Loader2,
+    Lock,
+    Mail,
+    Phone,
+    Radio,
+    Tag,
+    User,
 } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import http from "../api/http";
 
 const Register = () => {
@@ -68,11 +67,14 @@ const Register = () => {
     setMessage({ text: "", type: "" });
 
     try {
-      const imageUrl = await handleImageUpload();
-      if (!imageUrl) {
-        setMessage({ text: "Image upload failed", type: "error" });
-        setLoading(false);
-        return;
+      let imageUrl = '';
+      if (imageFile) {
+        imageUrl = await handleImageUpload();
+        if (!imageUrl) {
+          setMessage({ text: "Image upload failed. Try a smaller file.", type: "error" });
+          setLoading(false);
+          return;
+        }
       }
 
       const payload = { ...formData, image: imageUrl };
@@ -159,7 +161,6 @@ const Register = () => {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
-                required
               />
             </label>
           </div>
