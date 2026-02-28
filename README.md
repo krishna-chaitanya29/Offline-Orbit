@@ -28,20 +28,150 @@ Built with the **MERN stack** (MongoDB, Express, React, Node.js), **Socket.IO** 
 
 ### Prerequisites
 
-Install **Docker Desktop** on your machine:
+You **only need Docker** — it handles everything else (MongoDB, Node.js, etc.) automatically.
 
-| OS | Download |
-|----|----------|
-| **Windows** | [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) |
-| **macOS** | [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/) |
-| **Linux** | `sudo apt install docker.io docker-compose-v2` (Ubuntu/Debian) or [Docker Docs](https://docs.docker.com/engine/install/) |
+<details>
+<summary><b>🪟 Windows</b></summary>
 
-After installing, **open Docker Desktop** and make sure it's running (you'll see the whale icon in your taskbar/menu bar).
+1. **Enable WSL2** (required for Docker):
+   - Open **PowerShell as Administrator** and run:
+   ```powershell
+   wsl --install
+   ```
+   - Restart your PC when prompted
+
+2. **Install Docker Desktop**:
+   - Download from [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+   - Run the installer → keep default settings → **Restart** when done
+   - Open **Docker Desktop** from Start Menu and wait until it says "Docker is running"
+
+3. **Install Git** (if not already installed):
+   - Download from [https://git-scm.com/download/win](https://git-scm.com/download/win)
+   - Run the installer → keep all defaults
+
+**Verify installation** (open Command Prompt or PowerShell):
+```powershell
+docker --version
+docker compose version
+git --version
+```
+
+</details>
+
+<details>
+<summary><b>🍎 macOS</b></summary>
+
+1. **Install Homebrew** (if not already installed):
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
+
+2. **Install Docker Desktop**:
+   ```bash
+   brew install --cask docker
+   ```
+   Or download manually from [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+
+   After installing, **open Docker Desktop** from Applications and wait until the whale icon in the menu bar is steady (not animating).
+
+3. **Install Git** (if not already installed):
+   ```bash
+   brew install git
+   ```
+   Or just run `git` in Terminal — macOS will prompt you to install Xcode Command Line Tools.
+
+**Verify installation:**
+```bash
+docker --version
+docker compose version
+git --version
+```
+
+</details>
+
+<details>
+<summary><b>🐧 Linux (Ubuntu / Debian)</b></summary>
+
+1. **Install Docker Engine + Compose:**
+   ```bash
+   # Remove old versions
+   sudo apt remove docker docker-engine docker.io containerd runc 2>/dev/null
+
+   # Install prerequisites
+   sudo apt update
+   sudo apt install -y ca-certificates curl gnupg
+
+   # Add Docker's official GPG key
+   sudo install -m 0755 -d /etc/apt/keyrings
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+   sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+   # Add Docker repository
+   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+   # Install Docker
+   sudo apt update
+   sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+   ```
+
+2. **Allow Docker without sudo:**
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+
+3. **Install Git:**
+   ```bash
+   sudo apt install -y git
+   ```
+
+**Verify installation:**
+```bash
+docker --version
+docker compose version
+git --version
+```
+
+</details>
+
+<details>
+<summary><b>🐧 Linux (Fedora / RHEL / CentOS)</b></summary>
+
+1. **Install Docker Engine + Compose:**
+   ```bash
+   sudo dnf install -y dnf-plugins-core
+   sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+   sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+   sudo systemctl start docker
+   sudo systemctl enable docker
+   ```
+
+2. **Allow Docker without sudo:**
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+
+3. **Install Git:**
+   ```bash
+   sudo dnf install -y git
+   ```
+
+**Verify installation:**
+```bash
+docker --version
+docker compose version
+git --version
+```
+
+</details>
+
+> **✅ That's it!** You don't need to install Node.js, MongoDB, or anything else — Docker handles all of that inside containers.
 
 ### Step 1 — Clone the project
 
 ```bash
-git clone https://github.com/sumithkumar123/Offline-Orbit.git
+git clone https://github.com/krishna-chaitanya29/Offline-Orbit.git
 cd Offline-Orbit
 ```
 
@@ -117,8 +247,75 @@ docker compose down -v     # Stop + delete all data (fresh start)
 If you can't install Docker, you can run things manually.
 
 ### Prerequisites
-1. **Node.js** v18+ → [Download](https://nodejs.org/)
-2. **MongoDB** running locally on port 27017 → [Download](https://www.mongodb.com/try/download/community)
+
+You need **Node.js**, **MongoDB**, and **Git** installed manually.
+
+<details>
+<summary><b>🪟 Windows</b></summary>
+
+1. **Node.js v18+**:
+   - Download from [https://nodejs.org/](https://nodejs.org/) (LTS version)
+   - Run the installer → check "Add to PATH" → Finish
+
+2. **MongoDB Community Server**:
+   - Download from [https://www.mongodb.com/try/download/community](https://www.mongodb.com/try/download/community)
+   - Run the installer → choose "Complete" → check "Install MongoDB as a Service"
+   - MongoDB will auto-start on port 27017
+
+3. **Git**:
+   - Download from [https://git-scm.com/download/win](https://git-scm.com/download/win)
+
+</details>
+
+<details>
+<summary><b>🍎 macOS</b></summary>
+
+```bash
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node.js
+brew install node
+
+# Install MongoDB
+brew tap mongodb/brew
+brew install mongodb-community
+brew services start mongodb-community
+
+# Git (comes with Xcode tools, or):
+brew install git
+```
+
+</details>
+
+<details>
+<summary><b>🐧 Linux (Ubuntu / Debian)</b></summary>
+
+```bash
+# Node.js v18+
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# MongoDB
+curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg
+echo "deb [signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+sudo apt update
+sudo apt install -y mongodb-org
+sudo systemctl start mongod
+sudo systemctl enable mongod
+
+# Git
+sudo apt install -y git
+```
+
+</details>
+
+**Verify everything:**
+```bash
+node --version    # Should show v18+
+mongosh           # Should connect to MongoDB
+git --version
+```
 
 ### Backend
 
